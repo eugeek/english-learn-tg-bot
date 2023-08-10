@@ -9,6 +9,7 @@ interface SessionData {
   knownWords: {english: string, russian: string}[] 
   unknownWords: {english: string, russian: string}[]
   currentWord: {english: string, russian: string}
+  user: {id: number, name: string}
 }
 type MyContext = Context & SessionFlavor<SessionData>;
 
@@ -29,31 +30,42 @@ async function bootstrap() {
     })
   );
 
-  bot.command("start", async(ctx) =>
-    ctx.replyWithPhoto('https://koteiki.com/wp-content/uploads/2019/05/011.jpg')
-    .then(() => {ctx.reply('Привет! Меня зовут Арнольд, я знаю 3000 английских слов! Я помогу тебе выучить их!', {
+  bot.command("start", async(ctx) => {
+    const { from } = ctx.update.message as any;
+
+    if (from) {
+      ctx.session.user = {id: from.username || '', name: from.first_name || 'student'}
+    }
+
+    await ctx.replyWithPhoto('https://koteiki.com/wp-content/uploads/2019/05/011.jpg')
+    await ctx.reply('Привет! Меня зовут кот Арнольд, я знаю 3000 английских слов! Я помогу тебе выучить их! Хочешь начать?🔥', {
       reply_markup: {
         keyboard: [
-          [{ text: 'Учить слова' }],
+          [{ text: 'Учить слова 🧑🏾‍🎓' }],
         ],
         resize_keyboard: true,
       },
-    })})
-  );
+    })
+  });
 
   bot.command('learn', async (ctx) => {
     sendNextWord(ctx);
   });
   
   bot.command('menu', (ctx) => {
-    ctx.reply('Выбери действие:', {
+    const { name } = ctx.session.user;
+    const { knownWords, unknownWords } = ctx.session;
+    const word = knownWords.length === 1 ? 'слово' : knownWords.length > 1 && knownWords.length < 5 ? 'слова' : 'слов';
+    ctx.reply(`${name || ''}, ты уже знаешь __${knownWords.length}__ ${word} 🎉`, {
       reply_markup: {
         keyboard: [
-          [{ text: 'Учить слова' }],
-          [{ text: 'Слова которые я не знаю' }],
+          [{ text: 'Учить слова 🧑🏾‍🎓' }],
+          [{ text: 'Слова которые я пока не знаю 🐼' }],
+          [{ text: 'Мне нужна помощь 🧑‍🚒' }],
         ],
         resize_keyboard: true,
       },
+      parse_mode: 'MarkdownV2',
     });
   });
 
@@ -61,56 +73,87 @@ async function bootstrap() {
     const {unknownWords} = ctx.session;
     ctx.reply(`Вот тебе 10 слов, постарайся запомнить их\nЯ обязательно спрошу их еще раз :)\n\n${unknownWords.slice(0,10).map(word => `_${word.english}_ - ${word.russian}`).join('\n\n')}`, {parse_mode: 'Markdown', reply_markup: {
       keyboard: [
-        [{ text: 'Учить слова' }],
+        [{ text: 'Учить слова 🧑🏾‍🎓' }],
       ],
       resize_keyboard: true,
     }});
   });
 
-  bot.hears('Учить слова', async (ctx) => {
-    sendNextWord(ctx);
-  });
-  
-  bot.hears('Слова которые я не знаю', (ctx) => {
-    const {unknownWords} = ctx.session;
-    ctx.reply(`Вот тебе 10 слов, постарайся запомнить их\nЯ обязательно спрошу их еще раз :)\n\n${unknownWords.slice(0,10).map(word => `_${word.english}_ - ${word.russian}`).join('\n\n')}`, {parse_mode: 'Markdown', reply_markup: {
-      keyboard: [
-        [{ text: 'Учить слова' }],
-      ],
-      resize_keyboard: true,
-    }});
-  });
-
-  bot.hears('Меню', async (ctx) => {
-    ctx.reply('Выбери действие:', {
+  bot.command('help', (ctx) => {
+    const { name } = ctx.session.user;
+    ctx.reply(`${name || ''}, если у тебя возник какой-то вопрос, то можешь написать моему *создателю*:\n\n@eugeek`, {
       reply_markup: {
         keyboard: [
-          [{ text: 'Учить слова' }],
-          [{ text: 'Слова которые я не знаю' }],
+          [{ text: 'Меню 🛎' }],
         ],
         resize_keyboard: true,
       },
+      parse_mode: 'MarkdownV2',
     });
   });
 
-  bot.hears(['Знаю', 'Не знаю'], async (ctx) => {
+  bot.hears('Учить слова 🧑🏾‍🎓', async (ctx) => {
+    sendNextWord(ctx);
+  });
+  
+  bot.hears('Слова которые я пока не знаю 🐼', (ctx) => {
+    const { unknownWords } = ctx.session;
+    ctx.reply(`Вот тебе 10 слов, постарайся запомнить их\nЯ обязательно спрошу их еще раз :)\n\n${unknownWords.slice(0,10).map(word => `_${word.english}_ - ${word.russian}`).join('\n\n')}`, {parse_mode: 'Markdown', reply_markup: {
+      keyboard: [
+        [{ text: 'Учить слова 🧑🏾‍🎓' }],
+      ],
+      resize_keyboard: true,
+    }});
+  });
+
+  bot.hears('Меню 🛎', async (ctx) => {
+    const { name } = ctx.session.user;
+    const { knownWords, unknownWords } = ctx.session;
+    const word = knownWords.length === 1 ? 'слово' : knownWords.length > 1 && knownWords.length < 5 ? 'слова' : 'слов';
+    ctx.reply(`${name || ''}, ты уже знаешь __${knownWords.length}__ ${word} 🎉`, {
+      reply_markup: {
+        keyboard: [
+          [{ text: 'Учить слова 🧑🏾‍🎓' }],
+          [{ text: 'Слова которые я пока не знаю 🐼' }],
+          [{ text: 'Мне нужна помощь 🧑‍🚒' }],
+        ],
+        resize_keyboard: true,
+      },
+      parse_mode: 'MarkdownV2',
+    });
+  });
+
+  bot.hears(['Знаю ⭐️', 'Пока не знаю 🍀'], async (ctx) => {
     const userChoice = ctx.message?.text;
     const wordPair = ctx.session.currentWord;
     const {knownWords, unknownWords} = ctx.session;
 
-    if (userChoice === 'Знаю') {
+    if (userChoice === 'Знаю ⭐️') {
       if (!knownWords.some(word => word.english === wordPair.english)) knownWords.push(wordPair)
 
       if(unknownWords.some(word => word.english === wordPair.english)) unknownWords.splice(unknownWords.findIndex(word => word.english === wordPair.english), 1);
 
       await ctx.reply(`Супер!\n\n${wordPair.english} - __*${wordPair.russian}*__\n\nТвое следующее слово:`, {parse_mode: 'Markdown'});
-    } else if (userChoice === 'Не знаю') {
+    } else if (userChoice === 'Пока не знаю 🍀') {
       if (!unknownWords.some(word => word.english === wordPair.english)) unknownWords.push(wordPair)
       await ctx.reply(`${wordPair.english} переводится как __*${wordPair.russian}*__\n\nЯ запомню его для тебя здесь /words\nТвое следующее слово:`, {parse_mode: 'MarkdownV2'});
     }
 
     sendNextWord(ctx)
-  }); 
+  });
+
+  bot.hears('Мне нужна помощь 🧑‍🚒', async (ctx) => {
+    const { name } = ctx.session.user;
+    ctx.reply(`${name || ''}, если у тебя возник какой-то вопрос, то можешь написать моему *создателю*:\n\n@eugeek\n\nP.S. кот Арнольд`, {
+      reply_markup: {
+        keyboard: [
+          [{ text: 'Меню 🛎' }],
+        ],
+        resize_keyboard: true,
+      },
+      parse_mode: 'Markdown',
+    });
+  });
   
   function sendNextWord(ctx: HearsContext<MyContext> | CommandContext<MyContext>) {
     const { knownWords } = ctx.session;
@@ -124,8 +167,8 @@ async function bootstrap() {
     ctx.reply(`Ты знаешь как перевести __*${wordPair.english}*__?`, {
         reply_markup: {
             keyboard: [
-                [{ text: 'Знаю' }, { text: 'Не знаю' }],
-                [{ text: 'Меню' }]
+                [{ text: 'Знаю ⭐️' }, { text: 'Пока не знаю 🍀' }],
+                [{ text: 'Меню 🛎' }]
             ],
             resize_keyboard: true,
         },
