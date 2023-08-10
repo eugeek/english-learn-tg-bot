@@ -1,0 +1,24 @@
+{
+  "name": "learn-words",
+  "version": "1.0.0",
+  "description": "",
+  "main": "bot.ts",
+  "scripts": {
+    "start": "nodemon --exec ts-node bot.ts",
+    "build": "tsc"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/node": "^20.4.9",
+    "@types/pg": "^8.10.2",
+    "dotenv": "^16.3.1",
+    "typescript": "^5.1.6"
+  },
+  "dependencies": {
+    "@grammyjs/storage-psql": "^2.3.0",
+    "grammy": "^1.17.2",
+    "pg": "^8.11.2"
+  }
+}
