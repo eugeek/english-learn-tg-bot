@@ -8,7 +8,7 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: QokPO37X1SKx
     ports:
-      - "5432:5432"
+      - "5434:5432"
     volumes:
       - tgbot:/var/lib/postgresql/data
     deploy:
