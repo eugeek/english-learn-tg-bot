@@ -1,7 +1,8 @@
 # telegram-learn-bot
-## Learning new words
-
+## Get started
 ```bash
+docker compose up -d
+
 npm i
 
 npm run build
