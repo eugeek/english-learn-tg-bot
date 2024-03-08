@@ -1,4 +1,5 @@
 # telegram-learn-bot
+## Learning new words
 
 ```bash
 npm i
