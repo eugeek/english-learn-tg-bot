@@ -1,8 +1,11 @@
-# telegram-learn-bot
+# English-russian words learn telegram bot
+
 ## Get started
 ```bash
+# Run postgres
 docker compose up -d
 
+# Run the bot
 npm i
 
 npm run build
